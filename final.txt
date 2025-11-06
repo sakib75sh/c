@@ -1,0 +1,361 @@
+***
+A) Consider finding the root of f(x) = (e^-x) (3.2 sin(x) - 0.5 cos(x)) on the interval [3, 4],
+ this time with Estep = 0.001, Eabs = 0.001. Show also the result in tabular format and
+ plot the solution using graphicalłły using Bisection method.
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+# Define the function
+def f(x):
+    return np.exp(-x) * (3.2 * np.sin(x) - 0.5 * np.cos(x))
+
+
+# Bisection method implementation
+def bisection_method(f, a, b, Estep, Eabs):
+    if f(a) * f(b) >= 0:
+        print("Bisection method fails.")
+        return None
+    a_n = a
+    b_n = b
+    results = []
+    while (b_n - a_n) / 2.0 > Estep:
+        midpoint = (a_n + b_n) / 2.0
+        results.append((a_n, b_n, midpoint, f(midpoint)))
+        if abs(f(midpoint)) < Eabs:  # Change here
+            return midpoint, results
+        elif f(a_n) * f(midpoint) < 0:
+            b_n = midpoint
+        else:
+            a_n = midpoint
+    return (a_n + b_n) / 2.0, results
+
+
+# Parameters
+a = 3
+b = 4
+Estep = 0.001
+Eabs = 0.001
+
+# Find the root
+root, results = bisection_method(f, a, b, Estep, Eabs)
+
+# Print results in tabular format
+print("a_n\t\tb_n\t\tmidpoint\tf(midpoint)")
+for result in results:
+    print(f"{result[0]:.6f}\t{result[1]:.6f}\t{result[2]:.6f}\t{result[3]:.6f}")
+
+# Plot the function and the root
+x = np.linspace(a, b, 400)
+y = f(x)
+plt.plot(x, y, label='f(x)')
+plt.axhline(0, color='black', linewidth=0.5)
+plt.axvline(root, color='r', linestyle='--', label=f'Root at x={root:.6f}')
+plt.legend()
+plt.xlabel('x')
+plt.ylabel('f(x)')
+plt.title('Bisection Method')
+plt.grid(True)
+plt.show()
+
+
+
+
+
+
+
+
+
+B) For the initial value problem (IVP) y'-y = -(1/2)(e^(t/2)) * sin(5t) + 5(e^(t/2)) + cos(5t), y(0) = 0
+Use Euler's Method to find the approximation to the solution at t=1, t=2, t=3, t=4, and t=5. Use h=0.1, h=0.5, h=0.01, h=0.05, h=0.001,
+ and h=0.005 for the approximations. Compare them to the exact values of the solution at these points. 
+ Show also the result in tabular format and plot the solution data using graphically.
+ 
+ 
+ 
+ import numpy as np
+import matplotlib.pyplot as plt
+
+# Define the differential equation
+def dydt(t, y):
+  return -(1/2) * np.exp(t/2) * np.sin(5*t) + 5 * np.exp(t/2) + np.cos(5*t)
+
+# Exact solution for comparison (if known)
+def exact_solution(t):
+  # Placeholder for the exact solution function
+  return np.exp(t/2) * (np.sin(5*t) + 5)
+
+# Euler's Method implementation
+def euler_method(dydt, y0, t0, t_end, h):
+  t_values = np.arange(t0, t_end + h, h)
+  y_values = np.zeros(t_values.shape)
+  y_values[0] = y0
+  for i in range(1, len(t_values)):
+    y_values[i] = y_values[i-1] + h * dydt(t_values[i-1], y_values[i-1])
+  return t_values, y_values
+
+# Initial conditions
+y0 = 0
+t0 = 0
+t_end = 5
+
+# Step sizes
+step_sizes = [0.1, 0.5, 0.01, 0.05, 0.001, 0.005]
+
+# Store results for each step size
+results = {}
+
+for h in step_sizes:
+  t_values, y_values = euler_method(dydt, y0, t0, t_end, h)
+  results[h] = (t_values, y_values)
+
+# Compare with exact solution at specific points
+comparison_points = [1, 2, 3, 4, 5]
+comparison_results = []
+
+for t in comparison_points:
+  exact = exact_solution(t)
+  approximations = {h: y[np.where(t_values == t)[0][0]] for h, (t_values, y) in results.items() if t in t_values}
+  comparison_results.append((t, exact, approximations))
+
+# Print results in tabular format
+print("t\tExact\t\t" + "\t".join([f"h={h}" for h in step_sizes]))
+for t, exact, approximations in comparison_results:
+  print(f"{t}\t{exact:.6f}\t" + "\t".join([f"{approximations[h]:.6f}" for h in step_sizes]))
+
+# Plot the results
+plt.figure(figsize=(12, 8))
+for h, (t_values, y_values) in results.items():
+  plt.plot(t_values, y_values, label=f'h={h}')
+plt.plot(t_values, exact_solution(t_values), 'k--', label='Exact Solution')
+plt.xlabel('t')
+plt.ylabel('y')
+plt.title('Euler Method Approximations')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+
+
+C) You are working for "COMPANY" that makes floats for ABC commodes. The floating ball has a specific gravity of 0.6 
+and has a radius of 5.5cm. You are asked to find the depth to which the ball is submerged when floating in water. 
+The equation that gives the depth x to which the ball is submerged under water is given by
+X^4 - 0.165*X^2 + 3.993x10^(-2) = 0
+Use the false-position method of finding roots of equations to find the depth x to which the ball is submerged under water. 
+Conduct three iterations to estimate the root of the above equation. Find the absolute relative approximate error at the end of each iteration,
+ and the number of significant digits at least correct at the end of third iteration.
+ 
+ 
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define the function
+def f(x):
+  return x**4 - 0.165 * x**2 + 3.993e-2
+
+# False-position method implementation
+def false_position_method(f, a, b, iterations):
+  if f(a) * f(b) >= 0:
+    print("False-position method fails.")
+    return None
+  results = []
+  for i in range(iterations):
+    c = b - (f(b) * (b - a)) / (f(b) - f(a))
+    results.append((a, b, c, f(c)))
+    if f(c) == 0:
+      break
+    elif f(a) * f(c) < 0:
+      b = c
+    else:
+      a = c
+  return c, results
+
+# Parameters
+a = 0
+b = 1
+iterations = 3
+
+# Find the root
+result = false_position_method(f, a, b, iterations)
+
+if result is not None:
+  root, results = result
+
+  # Print results in tabular format
+  print("Iteration\t a\t\t b\t\t c\t\t f(c)\t\t Absolute Relative Approximate Error")
+  prev_c = None
+  for i, result in enumerate(results):
+    a, b, c, fc = result
+    if prev_c is not None:
+      error = abs((c - prev_c) / c) * 100
+    else:
+      error = None
+    print(f"{i+1}\t\t {a:.6f}\t {b:.6f}\t {c:.6f}\t {fc:.6f}\t {error:.6f}" if error is not None else f"{i+1}\t\t {a:.6f}\t {b:.6f}\t {c:.6f}\t {fc:.6f}\t {'N/A'}")
+    prev_c = c
+
+  # Number of significant digits at least correct at the end of third iteration
+  if len(results) >= 3:
+    a, b, c, fc = results[-1]
+    error = abs((c - prev_c) / c) * 100
+    significant_digits = -int(np.floor(np.log10(error))) if error != 0 else float('inf')
+    print(f"\nNumber of significant digits at least correct at the end of third iteration: {significant_digits}")
+else:
+  print("False-position method failed.")
+  
+  
+  
+  
+  
+ D)  The vertical distance in meters covered by a rocket from t=8 to t=30 seconds is given by
+S = \int\limits_{30}^{8} (200 * ln [140000/(140000 - 2100 * t) - 9.8 * t]) dt
+Use Simpson 3/8 multiple segments rule with six segments to estimate the vertical distance. Plot also the curve and the data in tabular format.
+
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+# Function definition
+def f(t):
+    return 200 * np.log(140000 / (140000 - 2100 * t)) - 9.8 * t
+
+
+# Simpson's 3/8 rule implementation
+def simpsons_3_8_rule(a, b, n=3):
+    if n % 3 != 0:
+        raise ValueError("Number of subintervals (n) must be a multiple of 3 for Simpson's 3/8 rule.")
+
+    h = (b - a) / n
+    x = np.linspace(a, b, n + 1)
+    y = f(x)
+
+    integral = (3 * h / 8)* (y[0] + 3 * np.sum(y[1:n:3]) + 3 * np.sum(y[2:n:3]) + 2 * np.sum(y[3:n - 3:3]) + y[-1])
+
+    # Create a DataFrame for tabular output
+    df = pd.DataFrame({'t': x, 'f(t)': y})
+    print("\nTabular format of t and f(t):")
+    print(df)
+
+    return integral, x, y
+
+
+# Call the function and print the result
+distance, x_values, y_values = simpsons_3_8_rule(8, 30, n=6)
+print("\nEstimated distance using Simpson's 3/8 rule:", distance)
+
+# Plot the curve
+plt.figure(figsize=(12, 6))
+plt.plot(x_values, y_values, label='f(t)', color='b', marker='o')
+plt.title('Plot of f(t) over the interval [8, 30]')
+plt.xlabel('t')
+plt.ylabel('f(t)')
+plt.grid(True)
+plt.legend()
+plt.show()  
+  
+  
+  
+  
+  
+  
+ E) The vertical distance in meters covered by a rocket from 8-t to 30-t seconds is given by
+S = \int\limits_{30}^{8} (200 * ln [140000/(140000 - 2100 * t) - 9.8 * t]) dt
+
+i. Use the single segment trapezoidal rule to find the distance covered for 8= t to 30-t seconds.
+ii. Find the true error, Et for part (i).
+iii. Find the absolute relative true error for part (i).
+iv. Plot also the curve and the data in tabular format.
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import quad
+
+# Define the function to integrate
+def integrand(t):
+    return 200 * np.log(140000 / (140000 - 2100 * t)) - 9.8 * t
+
+# Single-segment trapezoidal rule implementation
+def trapezoidal_rule(f, a, b):
+    return (b - a) * (f(a) + f(b)) / 2
+
+# Parameters
+a = 8
+b = 30
+
+# i. Estimate the vertical distance using the trapezoidal rule
+distance_trapezoidal = trapezoidal_rule(integrand, a, b)
+print(f"Estimated vertical distance (trapezoidal rule): {distance_trapezoidal:.6f} meters")
+
+# ii. True value of the integral using scipy.integrate.quad
+true_value, _ = quad(integrand, a, b)
+print(f"True distance (exact integration): {true_value:.6f} meters")
+
+# iii. Calculate the true error
+true_error = true_value - distance_trapezoidal
+print(f"True error: {true_error:.6f} meters")
+
+# iv. Calculate the absolute relative true error
+absolute_relative_true_error = abs(true_error / true_value) * 100
+print(f"Absolute relative true error: {absolute_relative_true_error:.6f}%")
+
+# Plot the function and the integration points
+t_values = np.linspace(a, b, 1000)
+y_values = integrand(t_values)
+
+plt.plot(t_values, y_values, label='Integrand')
+plt.xlabel('t (seconds)')
+plt.ylabel('Integrand value')
+plt.title('Integrand Function for Vertical Distance Calculation')
+plt.grid(True)
+plt.legend()
+
+# Plot the points used in the trapezoidal rule
+t_points = np.array([a, b])
+y_points = integrand(t_points)
+plt.scatter(t_points, y_points, color='red', label='Trapezoidal Points')
+plt.legend()
+
+plt.show()
+
+# v. Print results in tabular format
+print("\nt (seconds)\tIntegrand")
+for t, y in zip(t_points, y_points):
+    print(f"{t:.2f}\t\t{y:.6f}")
+
+  
+  
+  
+  
+ F)  How is the length of a bluegill fish related to its age? Use Polynomial regression to analyze this problem with below information.
+In 2023,n = 78 Rui fish were randomly sampled from PSTU Pond. The researchers measured and recorded the following data (dataset):
+Response (y): length (in mm) of the fish
+Potential predictor (x1): age (in years) of the fish The researchers were primarily interested in learning how the length of a Rui fish is related to its age.
+
+
+import numpy as np
+from numpy.polynomial import Polynomial
+import matplotlib.pyplot as plt
+
+# Sample data (age, length)
+n = 78
+age = np.random.randint(1, 10, n)  # Age in years
+length = 30 + 20 * age + np.random.normal(0, 10, n)  # Length with some noise
+
+# Polynomial fit
+p = Polynomial.fit(age, length, deg=2)
+
+# Plot data and polynomial fit
+plt.scatter(age, length, color='blue', label='Data')
+plt.plot(*p.linspace(), color='red', label='Polynomial fit (degree 2)')
+plt.xlabel('Age (years)')
+plt.ylabel('Length (mm)')
+plt.title('Polynomial Regression for Fish Length vs. Age')
+plt.legend()
+plt.show()
+
+# Print polynomial coefficients in standard basis
+print("Polynomial coefficients:", p.convert().coef)
